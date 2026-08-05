@@ -1,0 +1,20 @@
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
+from app.gateway.detectors.result import DetectorResult
+from app.gateway.risk.assessment import RiskAssessment
+
+
+@dataclass
+class RequestContext:
+    request_id: str
+    conversation_id: str
+    user_id: str
+    role: str
+    prompt: str
+    timestamp: datetime
+    provider: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+    detector_results: list[DetectorResult] = field(default_factory=list)
+    risk_assessment: RiskAssessment | None = None
