@@ -5,6 +5,7 @@ from typing import Any
 from app.gateway.detectors.result import DetectorResult
 from app.gateway.risk.assessment import RiskAssessment
 from app.gateway.policy.decision import PolicyDecision
+from app.gateway.response_security.assessment import ResponseAssessment
 
 
 @dataclass
@@ -20,3 +21,4 @@ class RequestContext:
     detector_results: list[DetectorResult] = field(default_factory=list)
     risk_assessment: RiskAssessment | None = None
     policy_decision: PolicyDecision | None = None
+    response_assessment: ResponseAssessment | None = None

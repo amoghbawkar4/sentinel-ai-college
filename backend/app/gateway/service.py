@@ -5,6 +5,7 @@ import time
 from app.core.config import settings
 from app.gateway.context import RequestContext
 from app.gateway.policy.decision import PolicyDecisionType
+from app.gateway.response_security.engine import ResponseSecurityEngine
 from app.gateway.stages import AuditLogger, AuthorizationEngine, PolicyEngine, PromptPipeline, ResponsePipeline, RiskEngine
 from app.services.openai_service import OpenAIService, OpenAIServiceError
 
@@ -42,6 +43,7 @@ class SentinelAIGateway:
         self.authorization_engine = AuthorizationEngine()
         self.risk_engine = RiskEngine()
         self.policy_engine = PolicyEngine()
+        self.response_security_engine = ResponseSecurityEngine()
         self.response_pipeline = ResponsePipeline()
         self.audit_logger = AuditLogger()
         self.openai_service = openai_service or OpenAIService()
@@ -73,6 +75,8 @@ class SentinelAIGateway:
             raise GatewayError(str(exc), exc.status_code) from exc
 
         self._record(context, "openai_response_received", started)
+        response = self.response_security_engine.analyze(context, response)
+        self._record(context, "response_security", started)
         response = self.response_pipeline.process(context, response)
         self._record(context, "response_pipeline", started)
         self._record(context, "gateway_completed", started)
