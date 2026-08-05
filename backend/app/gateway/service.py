@@ -4,10 +4,12 @@ import time
 
 from app.core.config import settings
 from app.gateway.context import RequestContext
+from app.gateway.policy.decision import PolicyDecisionType
 from app.gateway.stages import AuditLogger, AuthorizationEngine, PolicyEngine, PromptPipeline, ResponsePipeline, RiskEngine
 from app.services.openai_service import OpenAIService, OpenAIServiceError
 
 logger = logging.getLogger("sentinelai.gateway")
+BLOCKED_RESPONSE = "This request has been blocked by SentinelAI Security Policy."
 
 
 def _configure_development_logger() -> None:
@@ -55,6 +57,13 @@ class SentinelAIGateway:
         self._record(context, "risk_engine", started)
         context = self.policy_engine.evaluate(context)
         self._record(context, "policy_engine", started)
+
+        if context.policy_decision and context.policy_decision.decision is PolicyDecisionType.BLOCK:
+            self._record(context, "gateway_request_blocked", started)
+            response = self.response_pipeline.process(context, BLOCKED_RESPONSE)
+            self._record(context, "response_pipeline", started)
+            self._record(context, "gateway_completed", started)
+            return response
 
         self._record(context, "openai_request_started", started)
         try:

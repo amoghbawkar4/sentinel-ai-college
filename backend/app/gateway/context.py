@@ -4,6 +4,7 @@ from typing import Any
 
 from app.gateway.detectors.result import DetectorResult
 from app.gateway.risk.assessment import RiskAssessment
+from app.gateway.policy.decision import PolicyDecision
 
 
 @dataclass
@@ -18,3 +19,4 @@ class RequestContext:
     metadata: dict[str, Any] = field(default_factory=dict)
     detector_results: list[DetectorResult] = field(default_factory=list)
     risk_assessment: RiskAssessment | None = None
+    policy_decision: PolicyDecision | None = None

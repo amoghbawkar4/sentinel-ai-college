@@ -3,6 +3,7 @@ import logging
 
 from app.gateway.context import RequestContext
 from app.gateway.prompt_security_pipeline import PromptSecurityPipeline
+from app.gateway.policy.engine import PolicyEvaluator
 from app.gateway.risk.engine import RiskIntelligenceEngine
 
 logger = logging.getLogger("sentinelai.gateway.risk")
@@ -45,8 +46,23 @@ class RiskEngine:
 
 
 class PolicyEngine:
+    def __init__(self, evaluator: PolicyEvaluator | None = None) -> None:
+        self.evaluator = evaluator or PolicyEvaluator()
+
     def evaluate(self, context: RequestContext) -> RequestContext:
-        # TODO: Add policy evaluation in a future phase.
+        context.policy_decision = self.evaluator.evaluate(context)
+        decision = context.policy_decision
+        logger.info(json.dumps({
+            "event": "policy_decision_completed",
+            "request_id": context.request_id,
+            "conversation_id": context.conversation_id,
+            "user_id": context.user_id,
+            "decision": decision.decision.value,
+            "policy_name": decision.policy_name,
+            "risk_score": decision.risk_score,
+            "risk_severity": decision.risk_severity.value,
+            "user_role": decision.user_role,
+        }))
         return context
 
 
