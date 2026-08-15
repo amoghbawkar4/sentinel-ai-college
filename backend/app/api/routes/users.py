@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.auth.dependencies import get_current_user, require_roles
+from app.auth.dependencies import get_administrator_user
 from app.database.session import get_db
 from app.models.user import User
 from app.schemas.user import PasswordChange, UserCreate, UserOut, UserUpdate
@@ -11,14 +11,14 @@ router = APIRouter()
 
 
 @router.get("", response_model=list[UserOut])
-def list_users(user: User = Depends(require_roles("Admin", "Security Analyst")), db: Session = Depends(get_db)) -> list[UserOut]:
+def list_users(user: User = Depends(get_administrator_user), db: Session = Depends(get_db)) -> list[UserOut]:
     service = UserService(db)
     users = service.list_users()
     return users
 
 
 @router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-def create_user(payload: UserCreate, user: User = Depends(require_roles("Admin")), db: Session = Depends(get_db)) -> UserOut:
+def create_user(payload: UserCreate, user: User = Depends(get_administrator_user), db: Session = Depends(get_db)) -> UserOut:
     service = UserService(db)
     try:
         created_user = service.create_user(payload.name, payload.email, payload.password, payload.role_id)
@@ -28,7 +28,7 @@ def create_user(payload: UserCreate, user: User = Depends(require_roles("Admin")
 
 
 @router.get("/{user_id}", response_model=UserOut)
-def get_user(user_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> UserOut:
+def get_user(user_id: str, user: User = Depends(get_administrator_user), db: Session = Depends(get_db)) -> UserOut:
     service = UserService(db)
     record = service.get_user(user_id)
     if not record:
@@ -37,7 +37,7 @@ def get_user(user_id: str, user: User = Depends(get_current_user), db: Session =
 
 
 @router.put("/{user_id}", response_model=UserOut)
-def update_user(user_id: str, payload: UserUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> UserOut:
+def update_user(user_id: str, payload: UserUpdate, user: User = Depends(get_administrator_user), db: Session = Depends(get_db)) -> UserOut:
     service = UserService(db)
     record = service.get_user(user_id)
     if not record:
@@ -47,7 +47,7 @@ def update_user(user_id: str, payload: UserUpdate, user: User = Depends(get_curr
 
 
 @router.post("/{user_id}/change-password")
-def change_password(user_id: str, payload: PasswordChange, user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict[str, str]:
+def change_password(user_id: str, payload: PasswordChange, user: User = Depends(get_administrator_user), db: Session = Depends(get_db)) -> dict[str, str]:
     service = UserService(db)
     record = service.get_user(user_id)
     if not record:
@@ -57,7 +57,7 @@ def change_password(user_id: str, payload: PasswordChange, user: User = Depends(
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id: str, user: User = Depends(require_roles("Admin")), db: Session = Depends(get_db)) -> None:
+def delete_user(user_id: str, user: User = Depends(get_administrator_user), db: Session = Depends(get_db)) -> None:
     service = UserService(db)
     record = service.get_user(user_id)
     if not record:

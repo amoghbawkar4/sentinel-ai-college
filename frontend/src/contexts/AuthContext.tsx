@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('refresh_token', response.data.refresh_token);
     const profile = await api.get('/auth/me');
     setUser(profile.data);
-    navigate('/dashboard');
+    navigate(profile.data.role_name === 'SentinelAI Administrator' ? '/dashboard' : '/employee', { replace: true });
   };
 
   const register = async (payload: RegisterPayload) => {
@@ -49,18 +49,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('refresh_token', response.data.refresh_token);
     const profile = await api.get('/auth/me');
     setUser(profile.data);
-    navigate('/dashboard');
+    navigate('/employee', { replace: true });
   };
 
   const logout = async () => {
     const refreshToken = localStorage.getItem('refresh_token');
-    if (refreshToken) {
-      await api.post('/auth/logout', { refresh_token: refreshToken });
+    try {
+      if (refreshToken) await api.post('/auth/logout', { refresh_token: refreshToken });
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      setUser(null);
+      navigate('/', { replace: true });
     }
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    setUser(null);
-    navigate('/login');
   };
 
   const value = useMemo(() => ({ user, login, register, logout, loading }), [user, loading]);

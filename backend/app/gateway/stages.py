@@ -5,6 +5,7 @@ from app.gateway.context import RequestContext
 from app.gateway.prompt_security_pipeline import PromptSecurityPipeline
 from app.gateway.policy.engine import PolicyEvaluator
 from app.gateway.risk.engine import RiskIntelligenceEngine
+from app.gateway.authorization.engine import AuthorizationEvaluator
 
 logger = logging.getLogger("sentinelai.gateway.risk")
 
@@ -18,8 +19,11 @@ class PromptPipeline:
 
 
 class AuthorizationEngine:
+    def __init__(self, evaluator: AuthorizationEvaluator | None = None) -> None:
+        self.evaluator = evaluator or AuthorizationEvaluator()
+
     def authorize(self, context: RequestContext) -> RequestContext:
-        # TODO: Add authorization evaluation in a future phase.
+        context.authorization_decision = self.evaluator.evaluate(context)
         return context
 
 

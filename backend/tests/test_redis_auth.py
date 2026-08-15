@@ -4,7 +4,10 @@ from app.database.init_db import init_db
 from app.database.session import SessionLocal
 from app.main import app
 from app.models.role import Role
+from app.models.audit_log import AuditLog
+from app.models.token import RefreshToken
 from app.models.user import User
+from app.models.user_role import UserRole
 from app.services.auth_service import AuthService
 from app.services.redis_service import RedisService
 from app.services.session_service import SessionService
@@ -15,6 +18,9 @@ def _setup_test_state() -> None:
     init_db()
     db = SessionLocal()
     try:
+        db.query(RefreshToken).delete()
+        db.query(AuditLog).delete()
+        db.query(UserRole).delete()
         db.query(User).delete()
         db.query(Role).delete()
         db.commit()
@@ -31,7 +37,7 @@ def test_token_revocation_and_session_storage() -> None:
             name="Redis User",
             email="redis@example.com",
             password_hash=hash_password("password123"),
-            role_id=db.query(Role).filter(Role.name == "User").first().id,
+            role_id=db.query(Role).filter(Role.name == "Employee").first().id,
             is_verified=True,
             is_active=True,
         )
@@ -42,7 +48,7 @@ def test_token_revocation_and_session_storage() -> None:
         db.close()
 
     auth_service = AuthService(SessionLocal())
-    user, access_token, refresh_token = auth_service.login("redis@example.com", "password123")
+    user, access_token, refresh_token = auth_service.login("redis@example.com", "password123", "Employee", "employee")
     assert user.id
     session_service = SessionService(RedisService())
     assert session_service.get_session(user.id) == refresh_token
@@ -57,11 +63,11 @@ def test_rate_limiting_on_auth_endpoints() -> None:
         for _ in range(10):
             response = client.post(
                 "/api/v1/auth/login",
-                json={"email": "missing@example.com", "password": "wrong"},
+                json={"email": "missing@example.com", "password": "wrong", "portal": "employee"},
             )
             assert response.status_code in {401, 429}
         response = client.post(
             "/api/v1/auth/login",
-            json={"email": "missing@example.com", "password": "wrong"},
+            json={"email": "missing@example.com", "password": "wrong", "portal": "employee"},
         )
         assert response.status_code == 429

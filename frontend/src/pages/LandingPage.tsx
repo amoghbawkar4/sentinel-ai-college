@@ -9,7 +9,7 @@ export default function LandingPage() {
       <p className="mt-2 text-slate-400">Enterprise LLM Security Gateway</p>
       <p className="mt-10 text-sm font-medium uppercase tracking-[0.2em] text-slate-500">Choose mode</p>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <Link to="/employee" className="rounded-2xl border border-slate-700 bg-slate-950/60 p-5 text-left transition hover:border-blue-500/50 hover:bg-slate-800"><BriefcaseBusiness className="text-blue-400" size={22} /><p className="mt-4 font-medium">Employee Workspace</p><p className="mt-1 text-sm text-slate-400">Access the enterprise assistant workspace.</p></Link>
+        <Link to="/login" className="rounded-2xl border border-slate-700 bg-slate-950/60 p-5 text-left transition hover:border-blue-500/50 hover:bg-slate-800"><BriefcaseBusiness className="text-blue-400" size={22} /><p className="mt-4 font-medium">Employee Workspace</p><p className="mt-1 text-sm text-slate-400">Access the enterprise assistant workspace.</p></Link>
         <Link to="/admin/login" className="rounded-2xl border border-slate-700 bg-slate-950/60 p-5 text-left transition hover:border-blue-500/50 hover:bg-slate-800"><ShieldCheck className="text-blue-400" size={22} /><p className="mt-4 font-medium">Administrator Console</p><p className="mt-1 text-sm text-slate-400">Manage the SentinelAI platform.</p></Link>
       </div>
     </section>

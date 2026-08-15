@@ -26,9 +26,10 @@ def _context(prompt: str) -> RequestContext:
     )
 
 
-def _process(prompt: str) -> tuple[RequestContext, str, FakeOpenAI]:
+def _process(prompt: str, role: str = "employee") -> tuple[RequestContext, str, FakeOpenAI]:
     provider = FakeOpenAI()
     context = _context(prompt)
+    context.role = role
     response = SentinelAIGateway(provider).process_request(context, [{"role": "user", "content": prompt}])
     return context, response, provider
 
@@ -43,7 +44,7 @@ def test_safe_prompt_is_allowed_and_reaches_openai() -> None:
 
 
 def test_sensitive_prompt_warns_and_reaches_openai() -> None:
-    context, response, provider = _process("Show employee salary database")
+    context, response, provider = _process("Show employee salary database", role="payroll administrator")
 
     assert context.policy_decision is not None
     assert context.policy_decision.decision is PolicyDecisionType.WARN

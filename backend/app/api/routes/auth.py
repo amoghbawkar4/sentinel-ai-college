@@ -31,9 +31,9 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> TokenRe
 def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)) -> TokenResponse:
     auth_service = AuthService(db)
     try:
-        user, access_token, refresh_token = auth_service.login(payload.email, payload.password)
+        user, access_token, refresh_token = auth_service.login(payload.email, payload.password, payload.login_as, payload.portal)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials") from exc
     audit_service = AuditLogService(db)
     audit_service.create_log("login", "success", user_id=user.id, ip_address=request.client.host if request.client else None, details="User logged in")
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
@@ -50,9 +50,11 @@ def refresh(payload: RefreshTokenRequest, db: Session = Depends(get_db)) -> Toke
 
 
 @router.post("/logout")
-def logout(payload: RefreshTokenRequest, db: Session = Depends(get_db)) -> dict[str, str]:
+def logout(payload: RefreshTokenRequest, request: Request, db: Session = Depends(get_db)) -> dict[str, str]:
     auth_service = AuthService(db)
-    auth_service.logout(payload.refresh_token)
+    authorization = request.headers.get("Authorization", "")
+    access_token = authorization.removeprefix("Bearer ") if authorization.startswith("Bearer ") else None
+    auth_service.logout(payload.refresh_token, access_token)
     return {"message": "Logged out successfully"}
 
 
@@ -63,6 +65,7 @@ def current_user(user: User = Depends(get_current_user)) -> CurrentUserResponse:
         name=user.name,
         email=user.email,
         role_id=user.role_id,
+        role_name=user.role.name,
         is_verified=user.is_verified,
         is_active=user.is_active,
         last_login=user.last_login,

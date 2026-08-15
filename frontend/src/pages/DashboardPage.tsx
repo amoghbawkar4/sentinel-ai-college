@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Activity, DatabaseZap, ShieldCheck, ServerCog, Wifi } from 'lucide-react';
-import { useAdminAuth } from '../contexts/AdminAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const cards = [
   { title: 'System Status', value: 'Operational', icon: ShieldCheck, accent: 'text-emerald-400' },
@@ -10,7 +10,7 @@ const cards = [
 ];
 
 export default function DashboardPage() {
-  const { adminEmail } = useAdminAuth();
+  const { user } = useAuth();
 
   return (
     <div className="space-y-6">
@@ -18,8 +18,8 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm text-blue-300">Welcome to SentinelAI</p>
-            <h2 className="text-2xl font-semibold">Administrator</h2>
-            <p className="mt-2 text-sm text-slate-400">{adminEmail}</p>
+            <h2 className="text-2xl font-semibold">{user?.name || 'Administrator'}</h2>
+            <p className="mt-2 text-sm text-slate-400">{user?.email}</p>
           </div>
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">All monitoring systems online</div>
         </div>

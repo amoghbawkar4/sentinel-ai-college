@@ -5,12 +5,15 @@ import time
 from app.core.config import settings
 from app.gateway.context import RequestContext
 from app.gateway.policy.decision import PolicyDecisionType
+from app.gateway.authorization.decision import AuthorizationStatus
 from app.gateway.response_security.engine import ResponseSecurityEngine
 from app.gateway.stages import AuditLogger, AuthorizationEngine, PolicyEngine, PromptPipeline, ResponsePipeline, RiskEngine
 from app.services.openai_service import OpenAIService, OpenAIServiceError
 
 logger = logging.getLogger("sentinelai.gateway")
 BLOCKED_RESPONSE = "This request has been blocked by SentinelAI Security Policy."
+UNAUTHORIZED_RESPONSE = "This request is not authorized under your current access permissions."
+REVIEW_RESPONSE = "This request requires additional authorization."
 
 
 def _configure_development_logger() -> None:
@@ -51,10 +54,17 @@ class SentinelAIGateway:
     def process_request(self, context: RequestContext, messages: list[dict[str, str]]) -> str:
         started = time.perf_counter()
         self._record(context, "request_received", started)
-        context = self.prompt_pipeline.process(context)
-        self._record(context, "prompt_pipeline", started)
         context = self.authorization_engine.authorize(context)
         self._record(context, "authorization", started)
+        if context.authorization_decision and context.authorization_decision.status is AuthorizationStatus.DENY:
+            self._record(context, "gateway_authorization_denied", started)
+            return UNAUTHORIZED_RESPONSE
+        if context.authorization_decision and context.authorization_decision.status is AuthorizationStatus.REVIEW:
+            self._record(context, "gateway_authorization_review_required", started)
+            return REVIEW_RESPONSE
+
+        context = self.prompt_pipeline.process(context)
+        self._record(context, "prompt_pipeline", started)
         context = self.risk_engine.evaluate(context)
         self._record(context, "risk_engine", started)
         context = self.policy_engine.evaluate(context)

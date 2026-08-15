@@ -1,7 +1,7 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, LogOut, Settings, ShieldCheck, UserCircle2, Users, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAdminAuth } from '../contexts/AdminAuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -12,8 +12,7 @@ const links = [
 ];
 
 export default function ProtectedLayout() {
-  const { adminEmail, logout } = useAdminAuth();
-  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -35,7 +34,7 @@ export default function ProtectedLayout() {
             ))}
           </nav>
 
-          <button onClick={() => { logout(); navigate('/admin/login'); }} className="mt-8 flex w-full items-center gap-3 rounded-xl border border-slate-800 px-3 py-3 text-sm text-slate-300 hover:bg-slate-800">
+          <button onClick={() => { void logout(); }} className="mt-8 flex w-full items-center gap-3 rounded-xl border border-slate-800 px-3 py-3 text-sm text-slate-300 hover:bg-slate-800">
             <LogOut size={18} /> Logout
           </button>
         </aside>
@@ -44,9 +43,9 @@ export default function ProtectedLayout() {
           <motion.header initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-glow backdrop-blur md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm text-slate-400">Secure operations console</p>
-              <h1 className="text-xl font-semibold">Welcome back, Administrator</h1>
+              <h1 className="text-xl font-semibold">Welcome back, {user?.name || 'Administrator'}</h1>
             </div>
-            <div className="rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-sm text-blue-300">{adminEmail}</div>
+            <div className="rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-sm text-blue-300">{user?.email}</div>
           </motion.header>
           <Outlet />
         </main>

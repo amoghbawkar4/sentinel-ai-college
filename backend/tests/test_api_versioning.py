@@ -13,6 +13,6 @@ def test_auth_routes_are_versioned() -> None:
     with TestClient(app) as client:
         response = client.post(
             "/api/v1/auth/login",
-            json={"email": "doesnotexist@example.com", "password": "wrong"},
+            json={"email": "doesnotexist@example.com", "password": "wrong", "portal": "employee"},
         )
     assert response.status_code == 401

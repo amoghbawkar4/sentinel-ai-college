@@ -4,13 +4,19 @@ from app.database.init_db import seed_default_roles
 from app.database.session import SessionLocal
 from app.main import app
 from app.models.role import Role
+from app.models.audit_log import AuditLog
+from app.models.token import RefreshToken
 from app.models.user import User
+from app.models.user_role import UserRole
 from app.utils.security import hash_password
 
 
 def _clear_data() -> None:
     db = SessionLocal()
     try:
+        db.query(RefreshToken).delete()
+        db.query(AuditLog).delete()
+        db.query(UserRole).delete()
         db.query(User).delete()
         db.query(Role).delete()
         db.commit()
@@ -38,7 +44,7 @@ def test_registration_uses_default_user_role_and_auth_flow() -> None:
 
         db = SessionLocal()
         try:
-            role = db.query(Role).filter(Role.name == "User").first()
+            role = db.query(Role).filter(Role.name == "Employee").first()
             user = db.query(User).filter(User.email == "alice@example.com").first()
         finally:
             db.close()
@@ -65,22 +71,29 @@ def test_registration_uses_default_user_role_and_auth_flow() -> None:
         logout_response = client.post(
             "/api/v1/auth/logout",
             json={"refresh_token": payload["refresh_token"]},
+            headers={"Authorization": f"Bearer {payload['access_token']}"},
         )
         assert logout_response.status_code == 200
+
+        revoked_access_response = client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {payload['access_token']}"},
+        )
+        assert revoked_access_response.status_code == 401
 
 
 def test_rbac_blocks_non_admin_access_to_protected_routes() -> None:
     _clear_data()
     db = SessionLocal()
     try:
-        admin_role = db.query(Role).filter(Role.name == "Admin").first()
-        user_role = db.query(Role).filter(Role.name == "User").first()
+        admin_role = db.query(Role).filter(Role.name == "SentinelAI Administrator").first()
+        user_role = db.query(Role).filter(Role.name == "Employee").first()
         if not admin_role or not user_role:
             raise AssertionError("Expected seeded roles")
 
         admin_user = User(
             name="Admin User",
-            email="admin@example.com",
+            email="platform-admin@example.com",
             password_hash=hash_password("password123"),
             role_id=admin_role.id,
             is_verified=True,
@@ -107,7 +120,7 @@ def test_rbac_blocks_non_admin_access_to_protected_routes() -> None:
     with TestClient(app) as client:
         admin_login = client.post(
             "/api/v1/auth/login",
-            json={"email": "admin@example.com", "password": "password123"},
+            json={"email": "platform-admin@example.com", "password": "password123", "portal": "administrator"},
         )
         assert admin_login.status_code == 200
         admin_token = admin_login.json()["access_token"]
@@ -120,7 +133,7 @@ def test_rbac_blocks_non_admin_access_to_protected_routes() -> None:
 
         user_login = client.post(
             "/api/v1/auth/login",
-            json={"email": "regular@example.com", "password": "password123"},
+            json={"email": "regular@example.com", "password": "password123", "login_as": "Employee", "portal": "employee"},
         )
         assert user_login.status_code == 200
         user_token = user_login.json()["access_token"]

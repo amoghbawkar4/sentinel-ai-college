@@ -13,22 +13,30 @@ import ForbiddenPage from '../pages/ForbiddenPage';
 import ErrorPage from '../pages/ErrorPage';
 import LandingPage from '../pages/LandingPage';
 import EmployeeWorkspacePage from '../pages/EmployeeWorkspacePage';
-import AdminLoginPage from '../pages/AdminLoginPage';
-import { useAdminAuth } from '../contexts/AdminAuthContext';
+import { useAuth } from '../contexts/AuthContext';
+
+function EmployeeRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return user.role_name === 'SentinelAI Administrator' ? <Navigate to="/403" replace /> : <>{children}</>;
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAdminAuthenticated } = useAdminAuth();
-  return isAdminAuthenticated ? <>{children}</> : <Navigate to="/admin/login" replace />;
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/admin/login" replace />;
+  return user.role_name === 'SentinelAI Administrator' ? <>{children}</> : <Navigate to="/403" replace />;
 }
 
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/employee" element={<EmployeeWorkspacePage />} />
-      <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route path="/employee" element={<EmployeeRoute><EmployeeWorkspacePage /></EmployeeRoute>} />
       <Route element={<PublicLayout />}>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage portal="employee" />} />
+        <Route path="/admin/login" element={<LoginPage portal="administrator" />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/error" element={<ErrorPage />} />
         <Route path="/403" element={<ForbiddenPage />} />

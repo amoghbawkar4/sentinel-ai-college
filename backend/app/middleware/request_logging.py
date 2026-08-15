@@ -31,13 +31,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             payload = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "request_id": request_id,
-                "user_id": getattr(getattr(request.state, "user", None), "id", None),
-                "email": getattr(getattr(request.state, "user", None), "email", None),
+                "user_id": getattr(request.state, "user_id", None),
+                "email": getattr(request.state, "user_email", None),
                 "ip": request.client.host if request.client else None,
                 "endpoint": request.url.path,
                 "method": request.method,
                 "status": status_code,
                 "latency_ms": duration_ms,
-                "role": getattr(getattr(request.state, "user", None), "role_id", None),
+                "role": getattr(request.state, "user_role_id", None),
             }
             logger.info(json.dumps(payload))

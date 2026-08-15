@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -7,6 +7,8 @@ from pydantic import BaseModel, EmailStr, Field
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    login_as: str | None = None
+    portal: Literal["employee", "administrator"]
     remember_me: bool = False
 
 
@@ -32,6 +34,7 @@ class CurrentUserResponse(BaseModel):
     name: str
     email: str
     role_id: int
+    role_name: str
     is_verified: bool
     is_active: bool
     last_login: Optional[datetime] = None

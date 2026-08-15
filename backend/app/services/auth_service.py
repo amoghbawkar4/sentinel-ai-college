@@ -9,7 +9,9 @@ from app.services.redis_service import RedisService
 from app.services.session_service import SessionService
 from app.utils.security import create_access_token, create_refresh_token, hash_password, verify_password
 
-DEFAULT_ROLE_NAMES = ("Admin", "User", "Analyst")
+DEFAULT_ROLE_NAMES = ("Employee", "Manager", "HR", "Payroll Administrator", "Security Analyst", "SentinelAI Administrator")
+EMPLOYEE_PORTAL_ROLES = {"employee", "manager", "hr", "payroll administrator", "security analyst"}
+ADMINISTRATOR_PORTAL_ROLE = "sentinelai administrator"
 
 
 class AuthService:
@@ -25,7 +27,7 @@ class AuthService:
             raise ValueError("Email already registered")
 
         self._ensure_default_roles()
-        role_name = role_name or "User"
+        role_name = role_name or "Employee"
         role = self.db.query(Role).filter(Role.name == role_name).first()
         if not role:
             raise ValueError(f"Role not found: {role_name}")
@@ -40,12 +42,19 @@ class AuthService:
         )
         return self.user_repository.create(user)
 
-    def login(self, email: str, password: str) -> tuple[User, str, str]:
+    def login(self, email: str, password: str, login_as: str | None, portal: str) -> tuple[User, str, str]:
         user = self.user_repository.get_by_email(email)
         if not user or not verify_password(password, user.password_hash):
             raise ValueError("Invalid credentials")
         if not user.is_active:
             raise ValueError("User is inactive")
+        role_name = user.role.name.casefold() if user.role else ""
+        if login_as and self._normalize_role_name(login_as) != self._normalize_role_name(user.role.name):
+            raise ValueError("Invalid credentials")
+        if portal == "employee" and role_name not in EMPLOYEE_PORTAL_ROLES:
+            raise ValueError("Invalid credentials")
+        if portal == "administrator" and role_name != ADMINISTRATOR_PORTAL_ROLE:
+            raise ValueError("Invalid credentials")
 
         access_token = create_access_token(user.id, user.role_id)
         refresh_token = create_refresh_token(user.id)
@@ -73,13 +82,15 @@ class AuthService:
         self.db.commit()
         return user, new_access_token, new_refresh_token
 
-    def logout(self, refresh_token_value: str) -> None:
+    def logout(self, refresh_token_value: str, access_token_value: str | None = None) -> None:
         refresh_token = self.db.query(RefreshToken).filter(RefreshToken.token_hash == refresh_token_value).first()
         if refresh_token:
             refresh_token.revoked = True
             self.redis_service.set_value(f"blacklist:{refresh_token_value}", True, ttl_seconds=int(timedelta(days=7).total_seconds()))
             self.session_service.delete_session(refresh_token.user_id)
             self.db.commit()
+        if access_token_value:
+            self.revoke_token(access_token_value)
 
     def _store_refresh_token(self, user_id: str, refresh_token_value: str) -> None:
         token = RefreshToken(
@@ -96,6 +107,10 @@ class AuthService:
             if role_name not in existing_roles:
                 self.db.add(Role(name=role_name, description=f"{role_name} role"))
         self.db.commit()
+
+    @staticmethod
+    def _normalize_role_name(name: str) -> str:
+        return name.replace(" ", "").casefold()
 
     def revoke_token(self, token_value: str) -> None:
         self.redis_service.set_value(f"blacklist:{token_value}", True, ttl_seconds=int(timedelta(days=7).total_seconds()))

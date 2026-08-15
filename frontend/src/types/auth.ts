@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   role_id: number;
+  role_name: string;
   is_verified: boolean;
   is_active: boolean;
   last_login?: string;
@@ -11,6 +12,8 @@ export interface User {
 export interface LoginPayload {
   email: string;
   password: string;
+  login_as?: string;
+  portal: 'employee' | 'administrator';
   remember_me?: boolean;
 }
 
