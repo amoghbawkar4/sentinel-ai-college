@@ -1,9 +1,10 @@
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.demo_users import DEMO_ROLES, DEMO_USERS
 from app.database.base import Base
 from app.database.session import SessionLocal, engine
-from app.models import audit_log, conversation, permission, role, role_permission, setting, token, user, user_role
+from app.models import audit_log, conversation, permission, role, role_permission, security_event, setting, token, user, user_role
 from app.models.role import Role
 from app.models.audit_log import AuditLog
 from app.models.token import RefreshToken
@@ -14,7 +15,35 @@ from app.utils.security import hash_password
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    ensure_security_event_columns()
     seed_default_roles()
+
+
+def ensure_security_event_columns() -> None:
+    """Apply only additive Phase 3.7 columns for databases initialized earlier."""
+    columns = {
+        "prompt": "TEXT",
+        "authorization_decision": "VARCHAR(20)",
+        "authorization_reason": "VARCHAR(500)",
+        "detector_results": "JSON",
+        "outcome": "VARCHAR(30)",
+        "provider_status_code": "INTEGER",
+        "response_assessment": "JSON",
+        "response_outcome": "VARCHAR(30)",
+        "latency_ms": "DOUBLE PRECISION",
+        "metadata_json": "JSON",
+        "error_type": "VARCHAR(200)",
+        "error_message": "VARCHAR(1000)",
+    }
+    with engine.begin() as connection:
+        for name, sql_type in columns.items():
+            connection.execute(text(f'ALTER TABLE security_events ADD COLUMN IF NOT EXISTS "{name}" {sql_type}'))
+        for index_name, columns_sql in {
+            "ix_security_events_conversation_timestamp": '"conversation_id", "event_timestamp"',
+            "ix_security_events_user_timestamp": '"user_id", "event_timestamp"',
+            "ix_security_events_authorization_decision": '"authorization_decision"',
+        }.items():
+            connection.execute(text(f'CREATE INDEX IF NOT EXISTS "{index_name}" ON security_events ({columns_sql})'))
 
 
 def seed_default_roles() -> None:

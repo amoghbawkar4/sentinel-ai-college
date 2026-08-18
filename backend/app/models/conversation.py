@@ -16,6 +16,7 @@ class Conversation(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan", order_by="Message.timestamp")
+    security_events = relationship("SecurityEvent", back_populates="conversation", cascade="all, delete-orphan", order_by="SecurityEvent.request_timestamp")
 
 
 class Message(Base):

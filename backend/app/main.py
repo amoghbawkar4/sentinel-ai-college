@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse
 
-from app.api.routes import auth, audit_logs, health, roles, settings as settings_routes, users, workspace
+from app.api.routes import auth, audit_logs, health, roles, security_events, settings as settings_routes, users, workspace
 from app.core.config import settings
 from app.database.init_db import init_db
 from app.middleware.exception_handler import ExceptionHandlerMiddleware
@@ -28,6 +28,7 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(roles.router, prefix="/api/v1/roles", tags=["roles"])
 app.include_router(settings_routes.router, prefix="/api/v1/settings", tags=["settings"])
 app.include_router(audit_logs.router, prefix="/api/v1/audit-logs", tags=["audit-logs"])
+app.include_router(security_events.router, prefix="/api/v1/security-events", tags=["security-events"])
 app.include_router(workspace.router, prefix="/api/v1/workspace", tags=["workspace"])
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
 

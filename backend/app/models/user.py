@@ -22,3 +22,4 @@ class User(Base):
     last_login: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     role = relationship("Role", backref="users")
+    security_events = relationship("SecurityEvent", back_populates="user")

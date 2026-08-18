@@ -51,7 +51,7 @@ def send_message(conversation_id: str, payload: ChatMessageRequest, user: User =
         provider="openai",
     )
     try:
-        response = SentinelAIGateway().process_request(context, history)
+        response = SentinelAIGateway(db=db).process_request(context, history)
     except GatewayError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     assistant_message = conversations.add_message(conversation, "assistant", response)

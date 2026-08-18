@@ -1,11 +1,13 @@
 import json
 import logging
+from sqlalchemy.orm import Session
 
 from app.gateway.context import RequestContext
 from app.gateway.prompt_security_pipeline import PromptSecurityPipeline
 from app.gateway.policy.engine import PolicyEvaluator
 from app.gateway.risk.engine import RiskIntelligenceEngine
 from app.gateway.authorization.engine import AuthorizationEvaluator
+from app.services.security_event_service import SecurityEventService
 
 logger = logging.getLogger("sentinelai.gateway.risk")
 
@@ -77,6 +79,13 @@ class ResponsePipeline:
 
 
 class AuditLogger:
+    def __init__(self, db: Session | None = None) -> None:
+        self.db = db
+
     def record(self, context: RequestContext, event: str) -> RequestContext:
-        # TODO: Persist gateway audit events in a future phase.
+        # Stage events remain in application logs; one complete event is persisted at the end.
         return context
+
+    def persist(self, context: RequestContext, **kwargs) -> None:
+        if self.db is not None:
+            SecurityEventService(self.db).create_from_context(context, **kwargs)
