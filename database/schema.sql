@@ -46,6 +46,22 @@ CREATE TABLE IF NOT EXISTS settings (
   session_timeout INTEGER NOT NULL DEFAULT 30
 );
 
+CREATE TABLE IF NOT EXISTS conversations (
+  id VARCHAR(36) PRIMARY KEY,
+  user_session UUID NOT NULL REFERENCES users(id),
+  title VARCHAR(120) NOT NULL DEFAULT 'New conversation',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id VARCHAR(36) PRIMARY KEY,
+  conversation_id VARCHAR(36) NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  role VARCHAR(20) NOT NULL,
+  content TEXT NOT NULL,
+  timestamp TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 INSERT INTO roles (name, description) VALUES
 ('Admin', 'System administrator'),
 ('Security Analyst', 'Security operations analyst'),

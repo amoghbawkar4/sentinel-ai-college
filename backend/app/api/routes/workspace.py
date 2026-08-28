@@ -33,6 +33,15 @@ def get_conversation(conversation_id: str, user: User = Depends(get_workspace_us
     return conversation
 
 
+@router.delete("/conversations/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_conversation(conversation_id: str, user: User = Depends(get_workspace_user), db: Session = Depends(get_db)) -> None:
+    conversations = ConversationService(db)
+    conversation = conversations.get_for_session(conversation_id, user.id)
+    if not conversation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+    conversations.delete(conversation)
+
+
 @router.post("/conversations/{conversation_id}/messages", response_model=ChatMessageResponse)
 def send_message(conversation_id: str, payload: ChatMessageRequest, user: User = Depends(get_workspace_user), db: Session = Depends(get_db)) -> ChatMessageResponse:
     conversations = ConversationService(db)

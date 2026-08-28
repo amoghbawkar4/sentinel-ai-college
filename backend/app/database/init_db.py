@@ -15,8 +15,18 @@ from app.utils.security import hash_password
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    ensure_conversation_columns()
     ensure_security_event_columns()
     seed_default_roles()
+
+
+def ensure_conversation_columns() -> None:
+    """Apply additive conversation columns for databases initialized earlier."""
+    with engine.begin() as connection:
+        connection.execute(text('ALTER TABLE conversations ADD COLUMN IF NOT EXISTS "title" VARCHAR(120)'))
+        connection.execute(text("UPDATE conversations SET title = 'New conversation' WHERE title IS NULL"))
+        connection.execute(text('ALTER TABLE conversations ALTER COLUMN "title" SET DEFAULT \'New conversation\''))
+        connection.execute(text('ALTER TABLE conversations ALTER COLUMN "title" SET NOT NULL'))
 
 
 def ensure_security_event_columns() -> None:

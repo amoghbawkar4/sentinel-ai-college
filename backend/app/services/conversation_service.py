@@ -23,9 +23,15 @@ class ConversationService:
         return conversation
 
     def add_message(self, conversation: Conversation, role: str, content: str) -> Message:
+        if role == "user" and conversation.title == "New conversation":
+            conversation.title = " ".join(content.split())[:117].rstrip() + ("..." if len(" ".join(content.split())) > 117 else "")
         conversation.updated_at = datetime.utcnow()
         message = Message(conversation_id=conversation.id, role=role, content=content)
         self.db.add(message)
         self.db.commit()
         self.db.refresh(message)
         return message
+
+    def delete(self, conversation: Conversation) -> None:
+        self.db.delete(conversation)
+        self.db.commit()
