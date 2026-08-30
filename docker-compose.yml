@@ -57,7 +57,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - '5173:5173'
+      - '5174:5174'
 
 volumes:
   postgres_data:

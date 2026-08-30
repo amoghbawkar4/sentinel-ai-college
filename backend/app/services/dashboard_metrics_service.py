@@ -71,6 +71,7 @@ class DashboardMetricsService:
                 risk_score=event.risk_score,
                 risk_severity=event.risk_severity,
                 policy_decision=event.policy_decision,
+                authorization_decision=event.authorization_decision,
                 outcome=event.outcome,
             )
             for event in events

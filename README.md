@@ -58,7 +58,7 @@ SentinelAI is a security gateway platform designed to sit between users and LLM 
 docker compose up --build
 ```
 
-The frontend will be available at http://localhost:5173 and the backend at http://localhost:8000.
+The frontend will be available at http://localhost:5174 and the backend at http://localhost:8000.
 
 ### Manual Setup
 

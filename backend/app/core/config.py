@@ -15,7 +15,7 @@ class Settings:
     refresh_token_expire_days: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
     postgres_url: str = os.getenv("DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/sentinelaidb")
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+    cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:5174")
     env: str = os.getenv("ENV", "development")
     redis_rate_limit_window_seconds: int = int(os.getenv("REDIS_RATE_LIMIT_WINDOW_SECONDS", 60))
     redis_rate_limit_max_requests: int = int(os.getenv("REDIS_RATE_LIMIT_MAX_REQUESTS", 10))

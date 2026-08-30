@@ -13,6 +13,7 @@ import ForbiddenPage from '../pages/ForbiddenPage';
 import ErrorPage from '../pages/ErrorPage';
 import LandingPage from '../pages/LandingPage';
 import EmployeeWorkspacePage from '../pages/EmployeeWorkspacePage';
+import InvestigationPage from '../pages/InvestigationPage';
 import { useAuth } from '../contexts/AuthContext';
 
 function EmployeeRoute({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,7 @@ export default function AppRoutes() {
       </Route>
 
       <Route element={<ProtectedLayout />}>
+        <Route path="/investigations/:identifier" element={<ProtectedRoute><InvestigationPage /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

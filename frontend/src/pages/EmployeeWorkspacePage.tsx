@@ -51,6 +51,7 @@ export default function EmployeeWorkspacePage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const shouldFollowRef = useRef(true);
+  const loadedUserIdRef = useRef<string | null>(null);
 
   const loadConversations = async () => {
     setLoadingConversations(true);
@@ -63,6 +64,16 @@ export default function EmployeeWorkspacePage() {
   };
 
   useEffect(() => {
+    if (!user?.id) {
+      loadedUserIdRef.current = null;
+      return;
+    }
+
+    if (loadedUserIdRef.current === user.id) {
+      return;
+    }
+
+    loadedUserIdRef.current = user.id;
     setConversations([]);
     setConversationId(null);
     setMessages([]);
