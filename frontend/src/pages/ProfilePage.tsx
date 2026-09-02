@@ -18,10 +18,6 @@ export default function ProfilePage() {
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <p className="text-sm text-slate-400">Role</p>
-            <p className="mt-2 font-medium">{user?.role_id === 1 ? 'Admin' : user?.role_id === 2 ? 'Security Analyst' : 'User'}</p>
-          </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
             <p className="text-sm text-slate-400">Status</p>
             <p className="mt-2 font-medium text-emerald-400">Active</p>
           </div>

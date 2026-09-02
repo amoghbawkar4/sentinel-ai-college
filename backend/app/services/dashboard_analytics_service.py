@@ -9,7 +9,7 @@ from app.models.security_event import SecurityEvent
 from app.models.user import User
 from app.schemas.dashboard import (
     DetectorAnalyticsOut, DetectorCount, InvestigationOut, OutcomeAnalyticsOut,
-    RiskAnalyticsOut, RiskPoint, TimelineEventOut, UserActivityOut,
+    RiskAnalyticsOut, RiskPoint, SecurityIntentAnalyticsOut, SecurityIntentCount, TimelineEventOut, UserActivityOut,
 )
 
 
@@ -77,6 +77,49 @@ class DashboardAnalyticsService:
         total = sum(item.count for item in counts.values())
         detected = sum(item.non_safe_count for item in counts.values())
         return DetectorAnalyticsOut(total_observations=total, detected_observations=detected, detectors=sorted(counts.values(), key=lambda item: item.detector_name))
+
+    def semantic_intents(self) -> SecurityIntentAnalyticsOut:
+        """Extract and aggregate security_intent values from detector metadata."""
+        prompt_rows = func.jsonb_array_elements(cast(SecurityEvent.detector_results, JSONB)).table_valued("value").alias("prompt_detectors")
+        value = cast(prompt_rows.c.value, JSONB)
+        rows = self.db.query(value).select_from(SecurityEvent).join(prompt_rows, true()).filter(SecurityEvent.detector_results.is_not(None)).all()
+
+        counts: dict[str, SecurityIntentCount] = {}
+        for (raw,) in rows:
+            self._add_security_intent(counts, raw)
+
+        # Also check response assessment for semantic intents if present
+        response_events = self.db.query(SecurityEvent.response_assessment).filter(SecurityEvent.response_assessment.is_not(None)).all()
+        for (assessment,) in response_events:
+            for item in (assessment or {}).get("detector_breakdown", []):
+                self._add_security_intent(counts, (item or {}).get("result", item))
+
+        total = sum(item.count for item in counts.values())
+        dangerous = sum(item.dangerous_count for item in counts.values())
+        return SecurityIntentAnalyticsOut(total_observations=total, dangerous_observations=dangerous, intents=sorted(counts.values(), key=lambda item: item.security_intent))
+
+    def _add_security_intent(self, counts: dict[str, SecurityIntentCount], raw: Any) -> None:
+        """Extract security_intent from detector result metadata and aggregate."""
+        if not isinstance(raw, dict):
+            return
+
+        # Try to get security_intent from metadata
+        metadata = raw.get("metadata", {})
+        if not isinstance(metadata, dict):
+            return
+
+        security_intent = metadata.get("security_intent")
+        if not security_intent:
+            return
+
+        intent_name = str(security_intent)
+        status = str(raw.get("status", "SAFE"))
+
+        item = counts.setdefault(intent_name, SecurityIntentCount(security_intent=intent_name, count=0, dangerous_count=0))
+        item.count += 1
+        if status != "SAFE":
+            item.dangerous_count += 1
+
 
     def _add_detector(self, counts: dict[str, DetectorCount], raw: Any) -> None:
         if not isinstance(raw, dict) or not raw.get("detector_name"):

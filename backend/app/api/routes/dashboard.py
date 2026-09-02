@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import get_administrator_user
 from app.database.session import get_db
 from app.models.user import User
-from app.schemas.dashboard import DashboardMetricsOut, DetectorAnalyticsOut, InvestigationOut, OutcomeAnalyticsOut, RiskAnalyticsOut, TimelineEventOut, UserActivityOut
+from app.schemas.dashboard import DashboardMetricsOut, DetectorAnalyticsOut, InvestigationOut, OutcomeAnalyticsOut, RiskAnalyticsOut, SecurityIntentAnalyticsOut, TimelineEventOut, UserActivityOut
 from app.services.dashboard_analytics_service import DashboardAnalyticsService
 from app.services.dashboard_metrics_service import DashboardMetricsService
 
@@ -33,6 +33,11 @@ def get_timeline(user_id: str | None = None, conversation_id: str | None = None,
 @router.get("/detectors", response_model=DetectorAnalyticsOut)
 def get_detector_analytics(user: User = Depends(get_administrator_user), db: Session = Depends(get_db)) -> DetectorAnalyticsOut:
     return DashboardAnalyticsService(db).detectors()
+
+
+@router.get("/semantic-intents", response_model=SecurityIntentAnalyticsOut)
+def get_semantic_intents(user: User = Depends(get_administrator_user), db: Session = Depends(get_db)) -> SecurityIntentAnalyticsOut:
+    return DashboardAnalyticsService(db).semantic_intents()
 
 
 @router.get("/risk", response_model=RiskAnalyticsOut)

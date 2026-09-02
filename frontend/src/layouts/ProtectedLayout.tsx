@@ -45,7 +45,20 @@ export default function ProtectedLayout() {
               <p className="text-sm text-slate-400">Secure operations console</p>
               <h1 className="text-xl font-semibold">Welcome back, {user?.name || 'Administrator'}</h1>
             </div>
-            <div className="rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-sm text-blue-300">{user?.email}</div>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-sm text-blue-300">
+                {user?.email}
+              </div>
+
+              {window.location.pathname === '/dashboard' && (
+                <button
+                  onClick={() => window.dispatchEvent(new Event('dashboard-refresh'))}
+                  className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-800"
+                >
+                  Refresh data
+                </button>
+              )}
+            </div>
           </motion.header>
           <Outlet />
         </main>

@@ -1,45 +1,96 @@
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 
-const logs = [
-  { id: 1, timestamp: '2026-07-25 10:12', user: 'A. Rivera', action: 'Login', status: 'Success', ip: '192.168.1.10' },
-  { id: 2, timestamp: '2026-07-25 09:58', user: 'J. Chen', action: 'Role Update', status: 'Success', ip: '10.0.0.5' },
-];
+type TimelineEvent = {
+  event_id: string;
+  request_id: string;
+  conversation_id: string;
+  timestamp: string;
+  user_id: string;
+  risk_score: number | null;
+  risk_severity: string | null;
+  policy_decision: string | null;
+  outcome: string;
+};
+
+const statusClass = (value: string | null) =>
+  value?.toLowerCase() === 'allowed' || value?.toLowerCase() === 'allow'
+    ? 'text-emerald-300'
+    : value?.toLowerCase().includes('block') || value?.toLowerCase() === 'denied'
+      ? 'text-rose-300'
+      : 'text-amber-300';
 
 export default function AuditLogsPage() {
-  return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">Audit Logs</h2>
-          <p className="text-sm text-slate-400">Search, sort, and review security events.</p>
-        </div>
-        <input placeholder="Search logs..." className="w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-3 md:w-72" />
-      </div>
+  const navigate = useNavigate();
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-800">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-800/70 text-slate-300">
-            <tr>
-              <th className="px-4 py-3">Timestamp</th>
-              <th className="px-4 py-3">User</th>
-              <th className="px-4 py-3">Action</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">IP</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log) => (
-              <tr key={log.id} className="border-t border-slate-800 bg-slate-950/60">
-                <td className="px-4 py-3">{log.timestamp}</td>
-                <td className="px-4 py-3">{log.user}</td>
-                <td className="px-4 py-3">{log.action}</td>
-                <td className="px-4 py-3 text-emerald-400">{log.status}</td>
-                <td className="px-4 py-3">{log.ip}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+  useEffect(() => {
+    const loadTimeline = async () => {
+      setLoading(true);
+      try {
+        const response = await api.get<TimelineEvent[]>('/dashboard/timeline?limit=100');
+        setEvents(response.data);
+      } catch {
+        setError('Unable to load request timeline.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    void loadTimeline();
+  }, []);
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <motion.div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+        <h2 className="text-xl font-semibold">Request Timeline</h2>
+        <p className="text-sm text-slate-400">Historical prompt/request activity.</p>
+
+        {error && (
+          <p className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">
+            {error}
+          </p>
+        )}
+
+        <div className="mt-4 max-h-96 overflow-y-auto rounded-2xl border border-slate-800">
+          {loading ? (
+            <div className="flex items-center justify-center py-8 text-slate-400">Loading timeline...</div>
+          ) : events.length > 0 ? (
+            <table className="w-full text-left text-xs">
+              <thead className="sticky top-0 bg-slate-800/70 text-slate-300">
+                <tr>
+                  <th className="px-4 py-3">Time</th>
+                  <th className="px-4 py-3">User / Request</th>
+                  <th className="px-4 py-3">Risk</th>
+                  <th className="px-4 py-3">Policy</th>
+                  <th className="px-4 py-3">Outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((event) => (
+                  <tr key={event.event_id} className="border-t border-slate-800 bg-slate-950/60 cursor-pointer hover:bg-slate-900/60" onClick={() => navigate(`/investigations/${event.event_id}`)}>
+                    <td className="px-4 py-3 text-slate-400">{new Date(event.timestamp).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-blue-300">
+                      {event.user_id.slice(0, 8)}
+                      <p className="text-slate-500">{event.request_id.slice(0, 8)}</p>
+                    </td>
+                    <td className={`px-4 py-3 ${statusClass(event.risk_severity)}`}>
+                      {event.risk_severity} {event.risk_score ?? ''}
+                    </td>
+                    <td className="px-4 py-3 text-slate-300">{event.policy_decision}</td>
+                    <td className="px-4 py-3 text-slate-300">{event.outcome}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="flex items-center justify-center py-8 text-slate-400">No request timeline data recorded.</div>
+          )}
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

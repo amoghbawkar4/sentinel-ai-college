@@ -39,6 +39,19 @@ class DetectorCount(BaseModel):
     severity_counts: dict[str, int] = {}
 
 
+class SecurityIntentCount(BaseModel):
+    security_intent: str
+    count: int
+    dangerous_count: int
+
+
+class SecurityIntentAnalyticsOut(BaseModel):
+    total_observations: int
+    dangerous_observations: int
+    intents: list[SecurityIntentCount]
+
+
+
 class DetectorAnalyticsOut(BaseModel):
     total_observations: int
     detected_observations: int
