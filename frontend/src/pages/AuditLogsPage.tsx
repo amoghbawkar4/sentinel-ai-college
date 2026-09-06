@@ -30,7 +30,6 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     const loadTimeline = async () => {
-      setLoading(true);
       try {
         const response = await api.get<TimelineEvent[]>('/dashboard/timeline?limit=100');
         setEvents(response.data);
@@ -40,7 +39,18 @@ export default function AuditLogsPage() {
         setLoading(false);
       }
     };
+
+    const handleRefresh = () => {
+      void loadTimeline();
+    };
+
     void loadTimeline();
+
+    window.addEventListener('dashboard-refresh', handleRefresh);
+
+    return () => {
+      window.removeEventListener('dashboard-refresh', handleRefresh);
+    };
   }, []);
 
   return (

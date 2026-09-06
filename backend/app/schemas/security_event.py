@@ -9,7 +9,7 @@ class SecurityEventOut(BaseModel):
 
     id: str
     request_id: str
-    conversation_id: str
+    conversation_id: str | None = None
     user_id: str
     user_role: str
     request_timestamp: datetime

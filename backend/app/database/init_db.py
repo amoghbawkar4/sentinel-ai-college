@@ -17,6 +17,7 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     ensure_conversation_columns()
     ensure_security_event_columns()
+    ensure_security_event_conversation_reference()
     seed_default_roles()
 
 
@@ -54,6 +55,35 @@ def ensure_security_event_columns() -> None:
             "ix_security_events_authorization_decision": '"authorization_decision"',
         }.items():
             connection.execute(text(f'CREATE INDEX IF NOT EXISTS "{index_name}" ON security_events ({columns_sql})'))
+
+
+def ensure_security_event_conversation_reference() -> None:
+    """Keep audit events when their user-owned conversation is deleted."""
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE security_events ALTER COLUMN conversation_id DROP NOT NULL"))
+        connection.execute(text("""
+            DO $$
+            DECLARE constraint_name text;
+            BEGIN
+                FOR constraint_name IN
+                    SELECT pg_constraint.conname
+                    FROM pg_constraint
+                    JOIN pg_class ON pg_class.oid = pg_constraint.conrelid
+                    JOIN pg_attribute ON pg_attribute.attrelid = pg_constraint.conrelid
+                        AND pg_attribute.attnum = ANY(pg_constraint.conkey)
+                    WHERE pg_class.relname = 'security_events'
+                      AND pg_constraint.contype = 'f'
+                      AND pg_attribute.attname = 'conversation_id'
+                LOOP
+                    EXECUTE format('ALTER TABLE security_events DROP CONSTRAINT %I', constraint_name);
+                END LOOP;
+            END $$;
+        """))
+        connection.execute(text("""
+            ALTER TABLE security_events
+            ADD CONSTRAINT security_events_conversation_id_fkey
+            FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE SET NULL
+        """))
 
 
 def seed_default_roles() -> None:

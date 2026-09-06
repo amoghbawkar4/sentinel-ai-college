@@ -50,7 +50,7 @@ export default function ProtectedLayout() {
                 {user?.email}
               </div>
 
-              {window.location.pathname === '/dashboard' && (
+              {['/dashboard', '/audit-logs'].includes(window.location.pathname) && (
                 <button
                   onClick={() => window.dispatchEvent(new Event('dashboard-refresh'))}
                   className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-800"

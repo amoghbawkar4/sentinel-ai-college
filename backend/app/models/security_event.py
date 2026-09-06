@@ -19,7 +19,7 @@ class SecurityEvent(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     request_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=False, index=True)
-    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id"), nullable=False, index=True)
+    conversation_id: Mapped[str | None] = mapped_column(ForeignKey("conversations.id", ondelete="SET NULL"), nullable=True, index=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     user_role: Mapped[str] = mapped_column(String(100), nullable=False)
     # Preserve the established timestamp column names in already initialized databases.
