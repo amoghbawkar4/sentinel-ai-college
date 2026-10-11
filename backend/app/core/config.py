@@ -13,8 +13,11 @@ class Settings:
     algorithm: str = os.getenv("ALGORITHM", "HS256")
     access_token_expire_minutes: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
     refresh_token_expire_days: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
-    postgres_url: str = os.getenv("DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/sentinelaidb")
-    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    postgres_url: str = os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://postgres:YOUR_POSTGRES_PASSWORD@localhost:5432/sentinelaidb_college",
+    )
+    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6380/0")
     cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:5174")
     env: str = os.getenv("ENV", "development")
     redis_rate_limit_window_seconds: int = int(os.getenv("REDIS_RATE_LIMIT_WINDOW_SECONDS", 60))
