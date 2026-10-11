@@ -39,10 +39,16 @@ build/
 Thumbs.db
 
 # TypeScript
-*.tsbuildinfobackend/.env
 backend/.pytest_cache/
 **/__pycache__/
 frontend/dist/
 *.tsbuildinfo
 backend/data/
 backend/models/
+
+# Test caches
+.pytest_cache/
+**/.pytest_cache/
+
+# Generated project tree reports
+project-tree*.txt
